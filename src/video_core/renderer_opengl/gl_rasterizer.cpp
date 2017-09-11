@@ -49,6 +49,7 @@ RasterizerOpenGL::RasterizerOpenGL() : shader_dirty(true) {
 
     // Bind the UBO to binding point 0
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, uniform_buffer.handle);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(UniformData), nullptr, GL_STATIC_DRAW);
 
     uniform_block_data.dirty = true;
 
@@ -360,16 +361,20 @@ void RasterizerOpenGL::DrawTriangles() {
 
     // Sync the uniform data
     if (uniform_block_data.dirty) {
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(UniformData), &uniform_block_data.data,
-                     GL_STATIC_DRAW);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UniformData), &uniform_block_data.data);
         uniform_block_data.dirty = false;
     }
 
     state.Apply();
 
     // Draw the vertex batch
-    glBufferData(GL_ARRAY_BUFFER, vertex_batch.size() * sizeof(HardwareVertex), vertex_batch.data(),
-                 GL_STREAM_DRAW);
+    if (vertex_batch.size() > vertex_batch_max)
+    {
+        vertex_batch_max = vertex_batch.size();
+        glBufferData(GL_ARRAY_BUFFER, vertex_batch.size() * sizeof(HardwareVertex), nullptr, GL_STREAM_DRAW);
+    }
+
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertex_batch.size() * sizeof(HardwareVertex), vertex_batch.data());
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertex_batch.size());
 
     // Mark framebuffer surfaces as dirty

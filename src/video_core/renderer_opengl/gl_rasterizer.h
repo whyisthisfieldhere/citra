@@ -256,6 +256,7 @@ private:
     RasterizerCacheOpenGL res_cache;
 
     std::vector<HardwareVertex> vertex_batch;
+    int vertex_batch_max = 0;
 
     std::unordered_map<GLShader::PicaShaderConfig, std::unique_ptr<PicaShader>> shader_cache;
     const PicaShader* current_shader = nullptr;
